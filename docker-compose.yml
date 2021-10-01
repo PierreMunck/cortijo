@@ -1,0 +1,39 @@
+version: '3'
+services:
+  php:
+    image: cortijo
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    container_name: cortijo
+    volumes:
+      - ./app:/var/www
+    ports:
+      - "9000:9000"
+    depends_on:
+      - mysqldb
+  mysqldb:
+    image: mysql:5.7
+    container_name: mysqldb
+    command: mysqld --user=root --verbose
+    volumes:
+       - ./schemadump.sql:/docker-entrypoint-initdb.d/schemadump.sql
+    ports:
+      - "3336:3306"
+    environment:
+      MYSQL_DATABASE: "test"
+      MYSQL_USER: "test"
+      MYSQL_PASSWORD: "test"
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+  nginx:
+    container_name: nginx
+    image: nginx:stable-alpine
+    ports:
+      - '80:80'
+    volumes:
+      - ./app:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+      - mysqldb
